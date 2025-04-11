@@ -1,0 +1,296 @@
+---
+title: Git clone失败解决方法
+date: 2024-02-17 10:35:22 +0800
+categories: [CS, Git]
+tags: [Git]     # TAG names should always be lowercase
+---
+
+## 问题：找不到`head`指向
+
+解决方法：[git clone时提示warning: remote HEAD refers to nonexistent ref, unable to checkout](https://zhuanlan.zhihu.com/p/666820629)
+
+## 时光穿梭机
+### 查看历史记录
+``` bash
+$ git log
+```
+
+Example:
+
+``` bash
+xw@xw:~/learngit$ git log
+commit a85135e23b8b85be45aa028be1467ba72aeee977 (HEAD -> master)
+Author: liubin <xiao_wu0413@163.com>
+Date:   Tue Oct 24 20:44:24 2023 +0800
+
+    append GPL
+
+commit 7c1c517f867be3788dc6f5e22d0d9f7670ed4656
+Author: liubin <xiao_wu0413@163.com>
+Date:   Tue Oct 24 20:41:08 2023 +0800
+
+    add distributed
+
+commit 753dd632038dccfdea15561ceea5399852430482
+Author: liubin <xiao_wu0413@163.com>
+Date:   Tue Oct 24 20:36:43 2023 +0800
+
+    write a readme file
+```
+
+显示从最近到最远的提交日志，若输出信息太多，可加上 --pretty=oneline 参数：
+
+``` bash
+$ git log --pretty=oneline
+```
+
+Example:
+
+``` bash
+xw@xw:~/learngit$ git log --pretty=oneline
+a85135e23b8b85be45aa028be1467ba72aeee977 (HEAD -> master) append GPL
+7c1c517f867be3788dc6f5e22d0d9f7670ed4656 add distributed
+753dd632038dccfdea15561ceea5399852430482 write a readme file
+```
+
+
+
+### 回退
+``` bash
+$ git reset --hard HEAD^
+```
+
+HEAD^ 表示上一个版本，HEAD表示当前版本，HEAD^^ 表示上上一个版本，HEAD^100表示往前100个版本
+
+Example:
+
+``` bash
+xw@xw:~/learngit$ git reset --hard HEAD^
+HEAD is now at 7c1c517 add distributed
+```
+
+
+
+### 回退之后反悔
+#### 方法一：
+需要记得要恢复版本的版本号，如append GPL的commit id 是a85315e23...
+
+``` shell
+xw@xw:~/learngit$ git reset --hard a85135e23b8b85be45aa028be1467ba72aeee977
+HEAD is now at a85135e append GPL
+```
+
+#### 方法二：
+若不记得相应的版本号，可通过指令 git reflog 找到版本号
+
+``` bash
+$ git reflog
+```
+
+Example:
+
+``` shell
+xw@xw:~/learngit$ git reflog
+a85135e (HEAD -> master) HEAD@{0}: reset: moving to a85135e23b8b85be45aa028be1467ba72aeee977
+7c1c517 HEAD@{1}: reset: moving to HEAD^
+a85135e (HEAD -> master) HEAD@{2}: commit: append GPL
+7c1c517 HEAD@{3}: commit: add distributed
+753dd63 HEAD@{4}: commit (initial): write a readme file
+```
+
+### 查看当前工作区和版本库里面最新版本的区别
+命令：git diff HEAD -- filename
+
+Example:
+
+``` shell
+xw@xw:~/learngit$ git diff HEAD -- readme.txt
+diff --git a/readme.txt b/readme.txt
+index 76d770f..a9c5755 100644
+--- a/readme.txt
++++ b/readme.txt
+@@ -1,4 +1,4 @@
+ Git is a distributed version control system.
+ Git is free software distributed under the GPL.
+ Git has a mutable index called stage.
+-Git tracks changes.
++Git tracks changes of files.
+```
+
+### 撤销修改
+git checkout -- file可以丢弃工作区的修改
+
+Example:
+
+``` bash
+$ git checkout -- readme.txt
+```
+
+命令`git checkout -- readme.txt`意思就是，把`readme.txt`文件在工作区的修改全部撤销，这里有两种情况：
+
+一种是`readme.txt`自修改后还没有被放到暂存区，现在，撤销修改就回到和版本库一模一样的状态；
+
+一种是`readme.txt`已经添加到暂存区后，又作了修改，现在，撤销修改就回到添加到暂存区后的状态。
+
+总之，就是让这个文件回到最近一次`git commit`或`git add`时的状态。
+
+`git reset HEAD <file>`可以把暂存区的修改撤销掉（unstage），重新放回工作区
+
+### 删除文件
+若在电脑中将文件删除了，并且要把版本库里的相应文件也删掉，可以用指令`git rm`删掉，并且再用`git commit`
+
+Example:
+
+``` shell
+xw@xw:~/learngit$ ls
+LICENSE.txt  readme.txt
+xw@xw:~/learngit$ rm readme.txt 
+xw@xw:~/learngit$ ls
+LICENSE.txt
+xw@xw:~/learngit$ git status 
+On branch master
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	deleted:    readme.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+xw@xw:~/learngit$ git rm readme.txt 
+rm 'readme.txt'
+xw@xw:~/learngit$ git commit -m "delete readme.txt"
+[master 9ebf4c7] delete readme.txt
+ 1 file changed, 5 deletions(-)
+ delete mode 100644 readme.txt
+```
+
+ 若是删错了，想在版本库中恢复，可以用前面的`git checkout -- filename`
+
+注意：若一个文件从未添加到过版本库，那删除之后是无法恢复的。
+
+
+
+删除远程仓库中的文件：将仓库clone下来，然后在本地将目标文件删除，然后在comit和push回去
+
+``` bash
+git clone 仓库地址
+git add .
+step1: git rm 文件 //本地中该文件会被删除
+step2: git rm -r 文件夹 //删除文件夹
+step3: git commit -m '删除某个文件'
+step4: git push （origin master）
+```
+
+
+
+### 远程仓库
+#### 创建SSH Key
+用户主文件夹中是否有一个**.ssh**文件夹，若有则已创建ssh key，反之则没有。可以通过命令`ssh-keygen -t rsa -C "youremail@example.com"`创建ssh key，其中输完命令一路回车即可，可以不需要设置密码。
+
+然后登录Github，在setting中找到以下界面，添加即可。Github可以添加多个key。
+
+![](https://cdn.nlark.com/yuque/0/2023/png/33757968/1698239888271-c8b37c24-d270-4c0a-8097-7b0526a6d35e.png)
+
+#### 添加远程库
+首先在Github上创建一个仓库，<font style="color:rgb(51, 51, 51);">目前，在GitHub上的这个</font><font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">learngit</font><font style="color:rgb(51, 51, 51);">仓库还是空的，GitHub告诉我们，可以从这个仓库克隆出新的仓库，也可以把一个已有的本地仓库与之关联，然后，把本地仓库的内容推送到GitHub仓库。现在，我们根据GitHub的提示，在本地的</font><font style="color:rgb(51, 51, 51);">仓库下运行命令：</font>
+
+``` bash
+git remote add origin git@github.com:用户名/Github仓库名.git
+```
+
+<font style="color:rgb(51, 51, 51);">添加后，远程库的名字就是</font><font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">origin</font><font style="color:rgb(51, 51, 51);">，这是Git默认的叫法，也可以改成别的，但是</font><font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">origin</font><font style="color:rgb(51, 51, 51);">这个名字一看就知道是远程库。下一步，就可以把本地库的所有内容推送到远程库上：</font>
+
+``` bash
+git push -u origin master
+```
+
+Example:
+
+``` shell
+xw@xw:~/learngit$ git remote add origin git@github.com:xiaowu003/learngit.git
+xw@xw:~/learngit$ git push -u origin master
+The authenticity of host 'github.com (140.82.113.3)' can't be established.
+ED25519 key fingerprint is SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added 'github.com' (ED25519) to the list of known hosts.
+Enumerating objects: 24, done.
+Counting objects: 100% (24/24), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (19/19), done.
+Writing objects: 100% (24/24), 2.00 KiB | 1022.00 KiB/s, done.
+Total 24 (delta 5), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (5/5), done.
+To github.com:xiaowu003/learngit.git
+ * [new branch]      master -> master
+Branch 'master' set up to track remote branch 'master' from 'origin'.
+```
+
+<font style="color:rgb(51, 51, 51);">把本地库的内容推送到远程，用</font>`<font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">git push</font>`<font style="color:rgb(51, 51, 51);">命令，实际上是把当前分支</font>`<font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">master</font>`<font style="color:rgb(51, 51, 51);">推送到远程。由于远程库是空的，我们第一次推送</font><font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">master</font><font style="color:rgb(51, 51, 51);">分支时，加上了</font><font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">-u</font><font style="color:rgb(51, 51, 51);">参数，Git不但会把本地的</font><font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">master</font><font style="color:rgb(51, 51, 51);">分支内容推送的远程新的</font><font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">master</font><font style="color:rgb(51, 51, 51);">分支，还会把本地的</font><font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">master</font><font style="color:rgb(51, 51, 51);">分支和远程的</font><font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">master</font><font style="color:rgb(51, 51, 51);">分支关联起来，在以后的推送或者拉取时就可以简化命令。</font>
+
+<font style="color:rgb(51, 51, 51);">从现在起，只要本地作了提交，就可以通过命令：</font>
+
+``` bash
+$ git push origin master
+```
+
+<font style="color:rgb(51, 51, 51);">把本地</font><font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">master</font><font style="color:rgb(51, 51, 51);">分支的最新修改推送至GitHub.</font>
+
+#### <font style="color:rgb(51, 51, 51);">删除远程库</font>
+<font style="color:rgb(51, 51, 51);">如果添加的时候地址写错了，或者就是想删除远程库，可以用</font>`<font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">git remote rm <name></font>`<font style="color:rgb(51, 51, 51);">命令。使用前，建议先用</font>`<font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">git remote -v</font>`<font style="color:rgb(51, 51, 51);">查看远程库信息：</font>
+
+``` shell
+xw@xw:~/learngit$ git remote -v
+origin	git@github.com:xiaowu003/learngit.git (fetch)
+origin	git@github.com:xiaowu003/learngit.git (push)
+```
+
+<font style="color:rgb(51, 51, 51);">然后，根据名字删除，比如删除</font><font style="color:rgb(51, 51, 51);background-color:rgb(250, 250, 250);">origin</font><font style="color:rgb(51, 51, 51);">：</font>
+
+``` bash
+$ git remote rm origin
+```
+
+<font style="color:rgb(51, 51, 51);">此处的“删除”其实是解除了本地和远程的绑定关系，并不是物理上删除了远程库。远程库本身并没有任何改动。要真正删除远程库，需要登录到GitHub，在后台页面找到删除按钮再删除。</font>
+
+#### <font style="color:rgb(51, 51, 51);">修改远程仓库的地址</font>
+``` bash
+git remote	//查看所有远程仓库
+git remote xxx	//查看指定远程仓库地址
+git remote set-url <name> <repository address>	//修改远程仓库的地址
+```
+
+``` bash
+git remote	//查看所有远程仓库
+git remote rm <repository name>	//删除远程仓库
+git  remote add <repository name> <repositary address> //添加新的远程仓库
+```
+
+
+
+### 新建本地仓库
+1、如果本地电脑没有创建过ssh key，那需要先创建本地ssh key
+
+> <font style="color:rgb(102, 102, 102);background-color:rgb(248, 248, 248);">$ ssh-keygen -t rsa -C </font>"your_email@youremail.com<font style="color:rgb(102, 102, 102);background-color:rgb(248, 248, 248);">"</font>
+
+后面可以改成自己的邮箱,可以不用输入密码,不然后面每次提交都需要输入密码太麻烦
+
+2、在github上关联ssh key
+
+<font style="color:rgb(37, 41, 51);">在ssh key的路径下找到id_rsa.pub，用记事本打开，复制里面的key。到github下，Settings>>SSH and GPG keys>>SSH keys，new一个key，粘贴id_rsa.pub的key值。</font>
+
+<font style="color:rgb(37, 41, 51);">3、验证ssh key</font>
+
+> <font style="color:rgb(102, 102, 102);background-color:rgb(248, 248, 248);">$ ssh -T </font>git@github.com
+
+<font style="color:rgb(37, 41, 51);">第一次会提示是否continue，输入yes就会看到：You’ve successfully authenticated, but GitHub does not provide shell access 即表示已成功连上github。</font>
+
+<font style="color:rgb(37, 41, 51);">4、建立本地仓库</font>
+
+``` bash
+git init
+git add README.md
+git commit -m "first commit"
+git remote add <name> <prository address>
+git push -u <name> <branch name>
+```
+
