@@ -5,6 +5,22 @@ categories: [CS, GDB]
 tags: [GDB]     # TAG names should always be lowercase
 ---
 
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+7
+
+8
+
 ## GDB version
 
 > gdb -v
