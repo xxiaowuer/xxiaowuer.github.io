@@ -1,8 +1,8 @@
 ---
-title: Docker Tutorial
+title: CMake Tutorial
 date: 2024-06-21 14:03:41 +0800
-categories: [CS, Docker]
-tags: [docker, tutorial]    # TAG names should always be **lowercase**
+categories: [CS, CMake]
+tags: [cmake, tutorial]    # TAG names should always be **lowercase**
 ---
 
 ## LINUX安装
