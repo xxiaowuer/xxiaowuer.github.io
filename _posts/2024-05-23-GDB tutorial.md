@@ -2,7 +2,7 @@
 title: GDB Tutorial
 date: 2024-05-23 16:07:59 +0800
 categories: [CS, GDB]
-tags: [GDB]     # TAG names should always be lowercase
+tags: [gdb, tutorial]     # TAG names should always be lowercase
 ---
 
 ## GDB version
