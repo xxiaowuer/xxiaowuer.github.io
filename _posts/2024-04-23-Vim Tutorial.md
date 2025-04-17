@@ -7,6 +7,14 @@ tags: [vim, tutorial]    # TAG names should always be **lowercase**
 
 ## 记录现阶段用到的一些命令
 
+### Vim模式
+
+#### 普通模式
+
+#### 插入模式
+
+
+
 ### 关键字查找
 
 首先需要进入命令模式，然后按下`:`键输入命令。
