@@ -17,13 +17,13 @@ tags: [docker, tutorial]    # TAG names should always be **lowercase**
 
 - 常用操作：
 
-![img](https://kv56iiakc2.feishu.cn/space/api/box/stream/download/asynccode/?code=NDU4YjM5MjYxNjdmMTE3Mzg1YzMyZmYwNzM3ZmQ1ZDFfOFZFMDlTbUV5TVBmanRzWEZiOHVUYUxVYjhoQkkySzNfVG9rZW46QmVlWmJFUGNqbzF3QjR4cGN3T2Nsb2s5bkF6XzE3NDQ0NjM2MjU6MTc0NDQ2NzIyNV9WNA)
+![method](../images/2024-06-21-Docker Tutorial.assets/method.png)
 
 ### Install
 
 在开发者-文档-manuals-docker engine-install中有安装教程
 
-![img](https://kv56iiakc2.feishu.cn/space/api/box/stream/download/asynccode/?code=NWIzMzNlYzcxMWQxMDJhNGI3ODBlZjU0YmEwNmMwYzVfMTNaQVVuU0pKblpDVHFtTXVZU1UyRFNwS0Vub2Z1UnpfVG9rZW46TG1uYWIzQ0pWb2tpeEV4N3dVTmNHOHM0bkZnXzE3NDQ0NjM2MjU6MTc0NDQ2NzIyNV9WNA)
+![install](../images/2024-06-21-Docker Tutorial.assets/install.png)
 
 ### 镜像image相关
 
@@ -126,7 +126,7 @@ xw@xw:~$
 
 ### 容器（container）相关
 
-![img](https://kv56iiakc2.feishu.cn/space/api/box/stream/download/asynccode/?code=MGI1NmJlYTIyMjk5ZGExMTQ5YjU3YmY1MWIzOGMxNjFfNm1TQ3h3OEtPZnZpMTduQnRITWIxaE5XTWphU2JETklfVG9rZW46UGk3a2JBTE9Cb21ITEJ4TTVzOGMyclZtbkVkXzE3NDQ0NjM2MjU6MTc0NDQ2NzIyNV9WNA)
+![container method.pnd](../images/2024-06-21-Docker Tutorial.assets/container method.pnd.png)
 
 #### 运行（run）容器 / 查看：docker ps
 

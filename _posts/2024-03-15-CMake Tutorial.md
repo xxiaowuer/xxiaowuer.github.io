@@ -102,7 +102,7 @@ llo
 
 ### set
 
-![img](https://kv56iiakc2.feishu.cn/space/api/box/stream/download/asynccode/?code=YmMzYmEyZWYyODE4ODUyZWU4NmMxOTQ2MWVhMmE5YmNfOGdnUFFEMjc2N0E2dmkxZ2JJNTRrOXhXVTRKUzR6UGhfVG9rZW46UlBSR2JrRUl4b3dUeUd4SFoxU2NnYjBkblJnXzE3NDQ0NjU1ODY6MTc0NDQ2OTE4Nl9WNA)
+![set method](../images/2024-03-15-CMake Tutorial.assets/set method.png)
 
 - 单个变量的设置方法，注意变量名称带有空格的情况，第5行
 - 变量赋多值的方法
@@ -147,8 +147,8 @@ g++
 
 ### list
 
-![img](https://kv56iiakc2.feishu.cn/space/api/box/stream/download/asynccode/?code=NWNmN2JiOTNjMDI5ZmM2YWUzMmMyNDZmMmU4YzA2NTZfVVhOa3lRWXJwNmZERWVLRmhJVVBIaFNkaDluWTlRYzZfVG9rZW46UURxdGJZSXQ4b3VONDV4bWpXRGNlSzhPbjNlXzE3NDQ0NjU1ODY6MTc0NDQ2OTE4Nl9WNA)
+![list method](../images/2024-03-15-CMake Tutorial.assets/list method.png)
 
 ## cmake构建项目
 
-![img](https://kv56iiakc2.feishu.cn/space/api/box/stream/download/asynccode/?code=YmNhYTZjNjMzMjY3NmNmMzU1NzExMTE5ZGNmMmExOWZfQnhvNmU3dkIzcTV0dUdsSUIxN3NWRXFtYWVLTURZQ3ZfVG9rZW46Vk9oRWJBdWJKb2JnSGx4dzRDNmMxM3BZbncwXzE3NDQ0NjU1ODY6MTc0NDQ2OTE4Nl9WNA)
+![cmake make](../images/2024-03-15-CMake Tutorial.assets/cmake make)
