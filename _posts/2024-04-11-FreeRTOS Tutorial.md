@@ -21,7 +21,7 @@ tags: [freertos, tutorial]    # TAG names should always be **lowercase**
 
 正点原子提供的配置文件示例：
 
-```C
+``` c
 extern uint32_t SystemCoreClock;
 
 /* 基础配置项 */
@@ -189,7 +189,7 @@ BaseType_t xTaskCreate (
 	void * const 						pvParameters,	/* 传递给任务函数的参数 */
 	UBaseType_t 						uxPriority,		/* 任务优先级，范围：0 ~ configMAX_PRIORITIES - 1 */
 	TaskHandle_t * const 				pxCreatedTask 	/* 任务句柄，就是任务的任务控制块 */
-) {}
+)
 
 // 返回值
 // pdPASS:任务创建成功
@@ -730,7 +730,7 @@ void vTaskDelete( TaskHandle_t xTaskToDelete )
 
 1. 共有**四种状态**，除了运行态，其他三种任务状态的任务都有其对应的**任务状态列表**
 
-![任务状态转换图](./2024-04-11-FreeRTOS Tutorial.assets/任务状态转换图.png)
+   ![task state transition diagram](../images/2024-04-11-FreeRTOS Tutorial.assets/任务状态转换图.png)
 
 * 运行态
   * 正在执行的任务，该任务就处于运行态，注意在STM32中，**同一时间仅一个任务处于运行态**
