@@ -1,7 +1,7 @@
 ---
 title: CMake Tutorial
 date: 2024-06-21 14:03:41 +0800
-categories: [CS, CMake]
+categories: [CS, TOOL]
 tags: [cmake, tutorial]    # TAG names should always be **lowercase**
 ---
 

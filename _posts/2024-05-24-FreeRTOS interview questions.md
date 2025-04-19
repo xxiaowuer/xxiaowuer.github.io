@@ -1,7 +1,7 @@
 ---
 title: FreeRTOS interview questions
 date: 2024-05-24 16:20:42 +0800
-categories: [CS, FreeRTOS]
+categories: [CS, OS]
 tags: [freertos, interview]    # TAG names should always be **lowercase**
 ---
 

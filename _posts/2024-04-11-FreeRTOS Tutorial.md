@@ -1,7 +1,7 @@
 ---
 title: FreeRTOS Tutorial
 date: 2024-04-11 15:03:41 +0800
-categories: [CS, FreeRTOS]
+categories: [CS, OS]
 tags: [freertos, tutorial]    # TAG names should always be **lowercase**
 ---
 
@@ -477,9 +477,16 @@ void task3( void * pvParameters )
   * 检查传入的任务优先级是否合法，在0~31，然后赋值给`uxPriority`变量
   * 通过`vListInitialiseItem()`初始化任务的状态列表项，`vListInitialiseItem()`函数初始化任务的事件列表项
   * 将状态列表项归属为TCB，设置事件列表项的优先级（32 - 任务优先级），并将该事件列表项归属为TCB
-  * 调用`pxPortInitialiseStack()`函数初始化栈空间内容，通过向下调节栈顶指针的地址，依次写入：`xPSR、PC、R12、R3、R2、R1、R0、R11、R4`寄存器的值，然后将新的栈顶指针返回
+  * 调用`pxPortInitialiseStack()`函数初始化栈空间内容，通过向下调节栈顶指针的地址，依次写入：`xPSR、PC、R12、R3、R2、R1、R0、R11、R4`寄存器的值，然后将新的栈顶指针返回给栈顶指针；其中`pc`寄存器中存储的是该任务的**任务函数指针**
+  * 将初始化后的**TCB**通过强转赋值给**任务句柄**：`*pxCreatedTask = ( TaskHandle_t ) pxNewTCB;`
   
 * 通过`prvAddNewTaskToReadyList()`函数将该任务添加到就绪链表中
+  * 首先进入临界区
+  * 判断是否为第一个任务，若为第一个则将任务控制块赋值给`pxCurrentTCB`，通过`prvInitialiseTaskLists()`函数初始化任务列表
+    * 首先初始化**就绪列表**（0~31，共有32个），初始化**两个延时列表**，初始化**等待就绪列表**（当需要挂起所有任务时才会使用）；如果使能了删除任务，则会初始化删除任务列表，若使能了任务挂起，则会初始化任务挂起列表
+
+  * 若不是第一个任务
+
 * 返回
 
 ### 静态创建任务

@@ -1,7 +1,7 @@
 ---
 title: Docker Tutorial
 date: 2024-06-21 14:03:41 +0800
-categories: [CS, Docker]
+categories: [CS, TOOL]
 tags: [docker, tutorial]    # TAG names should always be **lowercase**
 ---
 

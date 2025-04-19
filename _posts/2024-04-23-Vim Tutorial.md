@@ -1,7 +1,7 @@
 ---
 title: Vim Tutorial
 date: 2024-04-23 10:45:58 +0800
-categories: [CS, Vim]
+categories: [CS, TOOL]
 tags: [vim, tutorial]    # TAG names should always be **lowercase**
 ---
 
