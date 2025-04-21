@@ -1,7 +1,7 @@
 ---
 title: CubeMx Tutorial：Software installation and setup
 date: 2023-09-11 16:42:03 +0800
-categories: [STM32, TOOL]
+categories: [TOOL, STMCubeMX]
 tags: [cubemx, tutorial]    # TAG names should always be **lowercase**
 ---
 
@@ -25,4 +25,14 @@ tags: [cubemx, tutorial]    # TAG names should always be **lowercase**
 
 4. 找到对应的系列，选择并下载就可以了，注意尽量不要点击refresh，会耗费很长时间，然后点击close即可
 
-​	![系列选择](../images/2023-09-11-CubeMX Tutorial.assets/系列选择)
+​	![系列选择](../images/2023-09-11-CubeMX Tutorial.assets/系列选择.png)
+
+## 新建一个工程
+
+在project中选择new project
+
+![芯片选择](../images/2023-09-11-CubeMX Tutorial.assets/芯片选择.png)
+
+然后就进入了芯片配置页面
+
+![芯片配置](../images/2023-09-11-CubeMX Tutorial.assets/芯片配置页面.png)
