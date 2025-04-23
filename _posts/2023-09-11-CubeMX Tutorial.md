@@ -2,7 +2,7 @@
 title: CubeMx Tutorial：Software installation and setup
 date: 2023-09-11 16:42:03 +0800
 categories: [TOOL, STMCubeMX]
-tags: [cubemx, tutorial]    # TAG names should always be **lowercase**
+tags: [cubemx, tutorial, stm32]    # TAG names should always be **lowercase**
 ---
 
 ## 软件设置
