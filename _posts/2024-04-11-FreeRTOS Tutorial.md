@@ -465,11 +465,14 @@ void task3( void * pvParameters )
 **详解**
 
 * 首先定义这个宏定义`#dedfine configSUPPORT_DYNAMIC_ALLOCATION 1`
+
 * 创建了任务控制块`TCB_t * pxNewTCB`和返回值`BaseType_t xReturn`
+
 * 判断栈空间增长方式确定TCB的位置，确保不会因为栈增长而破坏PCB，两种情况TCB和栈空间创建顺序相反，以常用的栈向下生长为例
   *   创建**堆栈指针**`StackType_t * pxStack`，实际上这个指针指向的空间是**堆空间**，然后从这里面选一块作为**栈空间**，所以这个指针为**堆空间的起始地址**
   * 通过`pvPortMallocStack()`函数分配栈空间，注意此函数接受的参数单位为**字节**，而动态创建函数传入的栈空间大小单位为**字**，所以要×4：`( ( size_t ) usStackDepth ) * sizeof( StackType_t )`
   * 栈空间分配成功，开始创建任务控制块TCB，分配相关内存给TCB，将栈顶指针赋值给TCB
+  
 * 然后通过`prvInitialiseNewTask()`函数初始化任务控制块其它成员
   * 根据堆栈指针将堆栈空间设置为全部写为`a5`，即写入脏数据
   * 将堆栈空间的最高位地址做8字节对齐，然后赋值给TCB，作为堆栈空间中**栈空间**的栈顶地址
@@ -481,13 +484,147 @@ void task3( void * pvParameters )
   * 将初始化后的**TCB**通过强转赋值给**任务句柄**：`*pxCreatedTask = ( TaskHandle_t ) pxNewTCB;`
   
 * 通过`prvAddNewTaskToReadyList()`函数将该任务添加到就绪链表中
-  * 首先进入临界区
+  
+  > ``` c
+  > static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
+  > {
+  >     /* Ensure interrupts don't access the task lists while the lists are being
+  >      * updated. */
+  >     // 首先进入临界区
+  >     taskENTER_CRITICAL();
+  >     {
+  >         uxCurrentNumberOfTasks++;	// 任务数量+1
+  > 		
+  >         // 判断是不是第一个任务：pxCurrentTCB指向优先级最高的任务，若无NULL则表示第一个任务
+  >         if( pxCurrentTCB == NULL )
+  >         {
+  >             /* There are no other tasks, or all the other tasks are in
+  >              * the suspended state - make this the current task. */
+  >             pxCurrentTCB = pxNewTCB;
+  > 
+  >             if( uxCurrentNumberOfTasks == ( UBaseType_t ) 1 )
+  >             {
+  >                 /* This is the first task to be created so do the preliminary
+  >                  * initialisation required.  We will not recover if this call
+  >                  * fails, but we will report the failure. */
+  >                 prvInitialiseTaskLists();
+  >             }
+  >             else
+  >             {
+  >                 mtCOVERAGE_TEST_MARKER();
+  >             }
+  >         }
+  >         else
+  >         {
+  >             /* If the scheduler is not already running, make this task the
+  >              * current task if it is the highest priority task to be created
+  >              * so far. */
+  >             if( xSchedulerRunning == pdFALSE )
+  >             {
+  >                 if( pxCurrentTCB->uxPriority <= pxNewTCB->uxPriority )
+  >                 {
+  >                     pxCurrentTCB = pxNewTCB;
+  >                 }
+  >                 else
+  >                 {
+  >                     mtCOVERAGE_TEST_MARKER();
+  >                 }
+  >             }
+  >             else
+  >             {
+  >                 mtCOVERAGE_TEST_MARKER();
+  >             }
+  >         }
+  > 
+  >         uxTaskNumber++;
+  > 
+  >         #if ( configUSE_TRACE_FACILITY == 1 )
+  >         {
+  >             /* Add a counter into the TCB for tracing only. */
+  >             pxNewTCB->uxTCBNumber = uxTaskNumber;
+  >         }
+  >         #endif /* configUSE_TRACE_FACILITY */
+  >         traceTASK_CREATE( pxNewTCB );
+  > 
+  >         prvAddTaskToReadyList( pxNewTCB );
+  > 
+  >         portSETUP_TCB( pxNewTCB );
+  >     }
+  >     taskEXIT_CRITICAL();
+  > 
+  >     if( xSchedulerRunning != pdFALSE )
+  >     {
+  >         /* If the created task is of a higher priority than the current task
+  >          * then it should run now. */
+  >         if( pxCurrentTCB->uxPriority < pxNewTCB->uxPriority )
+  >         {
+  >             taskYIELD_IF_USING_PREEMPTION();
+  >         }
+  >         else
+  >         {
+  >             mtCOVERAGE_TEST_MARKER();
+  >         }
+  >     }
+  >     else
+  >     {
+  >         mtCOVERAGE_TEST_MARKER();
+  >     }
+  > }
+  > ```
+  
+  * 首先`taskENTER_CRITICAL()`进入临界区
+  
+  * `uxCurrentNumberOfTasks++;`任务数量+1
+  
   * 判断是否为第一个任务，若为第一个则将任务控制块赋值给`pxCurrentTCB`，通过`prvInitialiseTaskLists()`函数初始化任务列表
     * 首先初始化**就绪列表**（0~31，共有32个），初始化**两个延时列表**，初始化**等待就绪列表**（当需要挂起所有任务时才会使用）；如果使能了删除任务，则会初始化删除任务列表，若使能了任务挂起，则会初始化任务挂起列表
-
-  * 若不是第一个任务
-
-* 返回
+  
+      > ``` c
+      > static void prvInitialiseTaskLists( void )
+      > {
+      >     UBaseType_t uxPriority;
+      > 
+      >     for( uxPriority = ( UBaseType_t ) 0U; uxPriority < ( UBaseType_t ) configMAX_PRIORITIES; uxPriority++ )
+      >     {
+      >         vListInitialise( &( pxReadyTasksLists[ uxPriority ] ) ); // 初始化就绪列表，最大是32个
+      >     }
+      > 	
+      >     // 初始化两个延时列表
+      >     vListInitialise( &xDelayedTaskList1 );
+      >     vListInitialise( &xDelayedTaskList2 );
+      >     // 初始化**等待就绪列表**
+      >     vListInitialise( &xPendingReadyList );
+      > 
+      >     #if ( INCLUDE_vTaskDelete == 1 )
+      >     {
+      >         // 若使能删除任务则初始化等待删除列表
+      >         vListInitialise( &xTasksWaitingTermination );
+      >     }
+      >     #endif /* INCLUDE_vTaskDelete */
+      > 
+      >     #if ( INCLUDE_vTaskSuspend == 1 )
+      >     {
+      >         // 若使能了任务挂起，则初始化挂起列表
+      >         vListInitialise( &xSuspendedTaskList );
+      >     }
+      >     #endif /* INCLUDE_vTaskSuspend */
+      > 
+      >     /* Start with pxDelayedTaskList using list1 and the pxOverflowDelayedTaskList
+      >      * using list2. */
+      >     pxDelayedTaskList = &xDelayedTaskList1;
+      >     pxOverflowDelayedTaskList = &xDelayedTaskList2;
+      > }
+      > ```
+  
+  * 若不是第一个任务，首先判断**调度器**是否已经启动，若未启动调度器，则会判断当前运行的任务优先级是否**小于等于**新创建任务的优先级，若成立，则将新创建的任务控制块赋值给当前任务控制块。
+  
+  * 然后将新任务添加到就绪列表
+  
+  * 退出临界区
+  
+  * 若已开启任务调度器，会判断当前运行的任务优先级是否**小于**新创建任务的优先级，若成立，则会执行**任务切换**
+  
+* 结束，返回
 
 ### 静态创建任务
 
@@ -499,7 +636,7 @@ void task3( void * pvParameters )
 TaskHandle_t xTaskCreateStatic( 
 		TaskFunction_t			pxTaskCode,				/* 指向任务函数的指针 */
     	const char * const		pcName,					/* 任务函数名 */
-    	const uint32_t			ulStackDepth, 			/* 任务堆栈大小注意字为单位 */
+    	const uint32_t			ulStackDepth, 			/* 任务堆栈大小注意 字 为单位 */
     	void * const			pvParameters, 			/* 传递的任务函数参数 */
     	UBaseType_t				uxPriority, 			/* 任务优先级 */
     	StackType_t * const		puxStackBuffer, 		/* 任务堆栈，一般为数组，由用户分配 */
@@ -511,19 +648,35 @@ TaskHandle_t xTaskCreateStatic(
 // 其它值：任务句柄，任务创建成功
 ```
 
+> 注意：双字（double world）、字（world）、字节（byte）、半字（half-world）区别
+>
+> 首先字的长度在不同硬件上是不一样的，大小取决于**数据总线**是多少位的，一般为16、32、64位（bit）
+>
+> 字节的长度为8位（bit）
+>
+> 半字的长度为字的一半
+>
+> 所以在ARM中：
+>
+> 16位系统：16bit = 1 world = 2 half-world = 2 byte = 0.5 double world
+>
+> 32位系统：32bit = 1 world = 2 half-world = 4 byte = 0.5 double world
+>
+> 64为系统：64bit = 1 world = 2 half-world = 8 byte = 0.5 double world
+
 #### 静态任务创建流程
 
 使用只需5步
 
-* 需将宏configSUPPORT_STATIC_ALLOCATION 配置为 1 
+* 需将宏`configSUPPORT_STATIC_ALLOCATION `配置为 1 
 * 定义空闲任务&定时器任务的任务堆栈及TCB
-* 实现两个接口函数：`vApplicationGetIdleTaskMemory( ) `&`vApplicationGetTimerTaskMemory ( )`
+* 手动实现两个接口函数：空闲任务内存分配：`vApplicationGetIdleTaskMemory( ) `&软件定时器任务内存分配：`vApplicationGetTimerTaskMemory ( )`
 * 定义函数入口参数
 * 编写任务函数
 
 #### 静态创建内部实现
 
-* TCB结构体成员赋值
+* TCB结构体成员赋值（静态和动态任务创建的任务控制块内容是相似的，可以一一对应）
 * 添加新任务到就绪列表中
 
 #### 函数源码
@@ -558,11 +711,13 @@ typedef struct tskTaskControlBlock * TaskHandle_t;
                 ( void ) xSize; /* Prevent lint warning when configASSERT() is not used. */
             }
         #endif /* configASSERT_DEFINED */
-
+		
+        // 检测是否分配堆栈内存，未分配跳过返回NULL表示失败
         if( ( pxTaskBuffer != NULL ) && ( puxStackBuffer != NULL ) )
         {
             /* The memory used for the task's TCB and stack are passed into this
              * function - use them. */
+            // 获取任务控制块和堆栈内存地址
             pxNewTCB = ( TCB_t * ) pxTaskBuffer; /*lint !e740 !e9087 Unusual cast is ok as the structures are designed to have the same alignment, and the size is checked by an assert. */
             pxNewTCB->pxStack = ( StackType_t * ) puxStackBuffer;
 
@@ -573,8 +728,10 @@ typedef struct tskTaskControlBlock * TaskHandle_t;
                     pxNewTCB->ucStaticallyAllocated = tskSTATICALLY_ALLOCATED_STACK_AND_TCB;
                 }
             #endif /* tskSTATIC_AND_DYNAMIC_ALLOCATION_POSSIBLE */
-
+			
+            // 给任务控制块赋值
             prvInitialiseNewTask( pxTaskCode, pcName, ulStackDepth, pvParameters, uxPriority, &xReturn, pxNewTCB, NULL );
+            // 初始化就绪列表
             prvAddNewTaskToReadyList( pxNewTCB );
         }
         else
@@ -587,6 +744,14 @@ typedef struct tskTaskControlBlock * TaskHandle_t;
 
 #endif /* SUPPORT_STATIC_ALLOCATION */
 ```
+
+**详细流程**
+
+* 获取控制块内存（首地址）
+* 获取堆栈内存（首地址）
+* 标记使用的静态的方式申请的TCB和堆栈内存
+* 调用`prvInitialiseNewTask() `初始化任务块，并将控制块信息返回给任务句柄，以便后续返回句柄信息
+* 调用`prvAddNewTaskToReadyList() `添加新创建任务到就绪列表中
 
 ### 删除任务
 
@@ -631,21 +796,26 @@ void vTaskDelete( TaskHandle_t xTaskToDelete )
         {
             /* If null is passed in here then it is the calling task that is
              * being deleted. */
+            // 找到要删除任务的任务控制块
             pxTCB = prvGetTCBFromHandle( xTaskToDelete );
-
+			
+            // 在相关的状态列表中移除任务
             /* Remove task from the ready/delayed list. */
             if( uxListRemove( &( pxTCB->xStateListItem ) ) == ( UBaseType_t ) 0 )
             {
+                // 判断对应优先级的就绪列表是否为0，若未空则清零对应的标志位（bit位）
                 taskRESET_READY_PRIORITY( pxTCB->uxPriority );
             }
             else
             {
                 mtCOVERAGE_TEST_MARKER();
             }
-
+			
+            // 判断是否有事件列表项在等待某件事
             /* Is the task waiting on an event also? */
             if( listLIST_ITEM_CONTAINER( &( pxTCB->xEventListItem ) ) != NULL )
             {
+                // 若没有，则移除
                 ( void ) uxListRemove( &( pxTCB->xEventListItem ) );
             }
             else
@@ -658,7 +828,8 @@ void vTaskDelete( TaskHandle_t xTaskToDelete )
              * portPRE_TASK_DELETE_HOOK() as in the Windows port that macro will
              * not return. */
             uxTaskNumber++;
-
+			
+            // 若要删除的任务是当前任务
             if( pxTCB == pxCurrentTCB )
             {
                 /* A task is deleting itself.  This cannot complete within the
@@ -666,6 +837,7 @@ void vTaskDelete( TaskHandle_t xTaskToDelete )
                  * Place the task in the termination list.  The idle task will
                  * check the termination list and free up any memory allocated by
                  * the scheduler for the TCB and stack of the deleted task. */
+                // 不能直接删除，先将当前任务插入到等待删除列表中
                 vListInsertEnd( &xTasksWaitingTermination, &( pxTCB->xStateListItem ) );
 
                 /* Increment the ucTasksDeleted variable so the idle task knows
@@ -685,12 +857,14 @@ void vTaskDelete( TaskHandle_t xTaskToDelete )
                 portPRE_TASK_DELETE_HOOK( pxTCB, &xYieldPending );
             }
             else
-            {
+            {	
+                // 不是当前任务，直接删除
                 --uxCurrentNumberOfTasks;
                 traceTASK_DELETE( pxTCB );
 
                 /* Reset the next expected unblock time in case it referred to
                  * the task that has just been deleted. */
+                // 更新下一个任务的阻塞超时时间，防止被删除的任务就是下一个阻塞超时任务
                 prvResetNextTaskUnblockTime();
             }
         }
@@ -701,6 +875,7 @@ void vTaskDelete( TaskHandle_t xTaskToDelete )
          * from prvCheckTasksWaitingTermination which is called from Idle task. */
         if( pxTCB != pxCurrentTCB )
         {
+            // 被删除的任务不是当前任务，则直接释放任务堆栈
             prvDeleteTCB( pxTCB );
         }
 
@@ -708,6 +883,7 @@ void vTaskDelete( TaskHandle_t xTaskToDelete )
          * been deleted. */
         if( xSchedulerRunning != pdFALSE )
         {
+            // 若开启了调度器，且删除的是任务自身，则先切换成其他任务，后续将会在 空闲任务 中将资源回收
             if( pxTCB == pxCurrentTCB )
             {
                 configASSERT( uxSchedulerSuspended == 0 );
