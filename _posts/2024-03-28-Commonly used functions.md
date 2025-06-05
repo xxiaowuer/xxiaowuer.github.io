@@ -85,7 +85,7 @@ int main() {
 
 自定义数据结构的排序：
 
-``` 
+``` c++
 // 主要是实现相应的cmp函数
 // 简单数据结构
 bool cmp(int num1, int num2) {
